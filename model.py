@@ -4,6 +4,7 @@ import pytorch_lightning as pl
 from utils import log_tensor_images, show_tensor_images, save_tensor_images
 import config
 import wandb
+import os
 class Generator(nn.Module) :
   def __init__(self, z_dim) :
     super().__init__()
@@ -181,3 +182,17 @@ class GAN(pl.LightningModule):
                                  lr=lr,
                                  betas=(config.BETA_1, config.BETA_2))
         return [opt_g, opt_d]
+    def on_train_epoch_end(self):
+        # Save local weights
+        checkpoint_dir = "checkpoints"  # You can set a different directory
+        os.makedirs(checkpoint_dir, exist_ok=True)
+
+        # Generate a filename for the checkpoint
+        filename = f"GAN_epoch_{self.current_epoch}.ckpt"
+        path = os.path.join(checkpoint_dir, filename)
+
+        # Save the model's state_dict
+        torch.save(self.state_dict(), path)
+
+        # Log the checkpoint to wandb
+        wandb.save(path)
